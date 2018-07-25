@@ -1,5 +1,5 @@
 /*
- * @(#)EventDetectorsECIR2019.java   1.0   Jul 24, 2018
+ * @(#)EventDetectionModules.java   1.0   Jul 24, 2018
  */
 package eventdetection;
 
@@ -32,21 +32,21 @@ import kn.uni.inf.niagarino.util.TokensDerivationFunction;
 
 /**
  * Class for running different event detection approaches for the ECIR 2019 experiment.
- * 
+ *
  * @author Andreas Weiler &lt;wele@zhaw.ch&gt;
  * @version 1.0
  */
-public class EventDetectorModules {
+public class EventDetectionModules {
 
 	/** Twitter schema of tuples in test data set. */
-	private static final Schema TWITTER_SCHEMA = new Schema(1, new Attribute("tweetid", Long.class), 
+	private static final Schema TWITTER_SCHEMA = new Schema(1, new Attribute("tweetid", Long.class),
 			new Attribute("creationdate", Date.class), new Attribute("content", String.class));
 	/** Datasource. */
 	private String streamFile;
 	/** OutputFolder. */
 	private String outputFolder;
 
-	public EventDetectorModules(final String streamFile, final String outputF) throws Exception {
+	public EventDetectionModules(final String streamFile, final String outputF) throws Exception {
 		this.streamFile = streamFile;
 		this.outputFolder = outputF;
 	}
@@ -81,7 +81,7 @@ public class EventDetectorModules {
 
 	/**
 	 * Starts the approach of the MSDM paper.
-	 * 
+	 *
 	 * @param name
 	 *        string of name
 	 * @param threshold
@@ -106,7 +106,7 @@ public class EventDetectorModules {
 		// distinct events for hourly windows
 		final Operator distinct = new Distinct("distinct", projection.getOutputSchema(), 1, 59);
 		// print results
-		PrintStream output = new PrintStream(new File(this.outputFolder + "/" + name + "_" + threshold + ".txt")); 
+		PrintStream output = new PrintStream(new File(this.outputFolder + "/" + name + "_" + threshold + ".txt"));
 		final Operator printer = new Print(distinct.getOutputSchema(), false, output);
 
 		plan.addOperator(tupleWindowIDF);
@@ -135,7 +135,7 @@ public class EventDetectorModules {
 
 	/**
 	 * Starts a LLH analysis.
-	 * 
+	 *
 	 * @param name
 	 *        string of name
 	 * @param topN
@@ -150,7 +150,7 @@ public class EventDetectorModules {
 		final Operator tupleWindow = new ValueWindow(last.getOutputSchema(), iws, iws);
 		final Operator llh = new LLH("LLH", tupleWindow.getOutputSchema(), 3, topN);
 		// print results
-		PrintStream output = new PrintStream(new File(this.outputFolder + "/" + name + "_" + topN + "_" + iws + ".txt")); 
+		PrintStream output = new PrintStream(new File(this.outputFolder + "/" + name + "_" + topN + "_" + iws + ".txt"));
 		final Operator printer = new Print(llh.getOutputSchema(), false, output);
 
 		plan.addOperator(tupleWindow);
@@ -163,10 +163,10 @@ public class EventDetectorModules {
 		// execute stream
 		plan.execute(output);
 	}
-	
+
 	   /**
 	    * Starts a RandomEvents analysis.
-	    * 
+	    *
 	    * @param name
 	    *        string of name
 	    * @param n
@@ -176,14 +176,14 @@ public class EventDetectorModules {
 	   public void runRandomEvents(final String name, final int n, final int iws) throws Exception {
 	      final PhysicalQueryPlan plan = this.preprocess(false);
 	      final Operator last = plan.getLastStreamOperator();
-	      
+
 	      // create windows
 	      final Operator tupleWindow = new ValueWindow(last.getOutputSchema(), iws, iws);
 	      final Operator randomTopics = new RandomEvents("RandomEvents", tupleWindow.getOutputSchema(), 3, n);
 	      // print results
-	      PrintStream output = new PrintStream(new File(this.outputFolder + "/" + name + "_" + n + "_" + iws + ".txt")); 
+	      PrintStream output = new PrintStream(new File(this.outputFolder + "/" + name + "_" + n + "_" + iws + ".txt"));
 	      final Operator printer = new Print(randomTopics.getOutputSchema(), false, output);
-	      
+
 	      plan.addOperator(tupleWindow);
 	      plan.addOperator(randomTopics);
 	      plan.addOperator(printer, OperatorType.SINK);
@@ -194,10 +194,10 @@ public class EventDetectorModules {
 	      // execute stream
 	      plan.execute(output);
 	   }
-	   
+
 	   /**
 	    * Starts a really simple approach.
-	    * 
+	    *
 	    * @param name
 	    *        string of name
 	    * @param topN
@@ -215,11 +215,11 @@ public class EventDetectorModules {
 	      // print
 	      PrintStream output = new PrintStream(new File(this.outputFolder + "/" + name + "_" + topN + "_" + iws + ".txt"));
 	      final Operator printer = new Print(aggregate.getOutputSchema(), false, output);
-	      
+
 	      plan.addOperator(tupleWindow);
 	      plan.addOperator(aggregate);
 	      plan.addOperator(printer, OperatorType.SINK);
-	      
+
 	      plan.addStream(last, tupleWindow);
 	      plan.addStream(tupleWindow, aggregate);
 	      plan.addStream(aggregate, printer);
