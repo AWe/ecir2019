@@ -7,7 +7,7 @@ import eventdetection.EventDetectorModules;
 
 /**
  * Class for running the complete ECIR 2019 experiment.
- * 
+ *
  * @author Andreas Weiler &lt;wele@zhaw.ch&gt;
  * @version 1.0
  */
@@ -26,7 +26,7 @@ public class ECIR2019_Experiment {
 			for (String type : types) {
 				switch (type) {
 				case "random":
-					for (int i = 1; i <= 100; i++) {
+					for (int i = 1; i <= 25; i++) {
 						for (int w : iws) {
 							System.out.println("Running random...");
 							ed.runRandomEvents(type, i, w);
@@ -34,7 +34,7 @@ public class ECIR2019_Experiment {
 					}
 					break;
 				case "topn":
-					for (int i = 1; i <= 100; i++) {
+					for (int i = 1; i <= 25; i++) {
 						for (int w : iws) {
 							System.out.println("Running topN...");
 							ed.runTopN(type, i, w);
@@ -42,17 +42,17 @@ public class ECIR2019_Experiment {
 					}
 					break;
 				case "shifty":
-					for (int i = 39; i <= 39; i++) {
+					for (int i = 1; i <= 100; i++) {
 						System.out.println("Running shifty...");
 						ed.runShifty(type, i);
 					}
 					break;
 				case "llh":
-					for (int i = 1; i <= 10; i++) {
+					for (int i = 1; i <= 25; i++) {
 						for (int w : iws) {
 							System.out.println("Running LLH...");
 							ed.runLLH(type, i, w);
-						}	
+						}
 					}
 					break;
 				}
