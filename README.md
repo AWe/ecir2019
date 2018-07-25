@@ -10,7 +10,7 @@ Here are the steps to setup the project in Eclipse:
 4. Have a look at the package *main* for starting the different modules.
 
 ## Twistor
-Twistor is forked from [Twistor Repository](https://github.com/HarryEuro/Twistor), you can find more details there.
+Twistor is forked from the [Twistor Repository](https://github.com/HarryEuro/Twistor), you can find a introductiona and more details about it there. However, we made some modifications to the code and therefore added it to this repository.
 
 ## Event Detection Modules
 The event detection modules are based on the data stream management system [Niagarino Repository](https://github.com/DBIS-UniKN/niagarino). We included the Niagarino project as JAR for executing the two event detection modules *Shifty* and *Log-Likelihood Ratio* and the two baseline methods *TopN* and *Random Events*.
