@@ -25,7 +25,7 @@ import twistor.Helper;
 
 /**
  * Class for running the evaluation of event detection results.
- * 
+ *
  * @author Andreas Weiler &lt;wele@zhaw.ch&gt;
  * @version 1.0
  */
@@ -58,7 +58,7 @@ public class EvaluationModule {
 
 	/**
 	 * Evaluates the results.
-	 * @param name of the technique 
+	 * @param name of the technique
 	 * @param events events to proof
 	 * @param results results to proof
 	 * @throws IOException I/O exception
@@ -98,7 +98,11 @@ public class EvaluationModule {
 		avglatency = Math.round(avglatency*1000)/1000.0;
 		System.out.println(name + "\t" + precision + "\t" + recall + "\t" + fscore + "\t" + avglatency + "\t" + perform);
 	}
-	
+
+	/**
+	 * Reads the file with the event descriptions.
+	 * @throws Exception exception
+ 	*/
 	public void readEventsFile(final String eventsFile) throws Exception {
 		File file = new File(eventsFile);
 		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory
@@ -118,23 +122,43 @@ public class EvaluationModule {
 	        }
 		}
 	}
-	
+
+	/**
+ * Returns the time that needs to be added to the results cause of wrong time output of Niagarino.
+ * Niagarino always prints the timestamp of the first seen tuple in the window.
+ * Note: The filenames need to contain the miliseconds of type or the name Shifty.
+ * @param name name of file
+ * @return time to add to
+ */
+private int getTimeAdder(final String name) {
+	if (name.contains("Shifty")) {
+		return 240;
+	} else {
+		int s = name.lastIndexOf("_") + 1;
+		int e = name.lastIndexOf(".");
+		return (int) (Integer.valueOf(name.substring(s, e)) / 1000.0);
+	}
+}
+
+	/**
+	* Inner class for an evaluation event instance.
+	*/
 	private class Evaent {
-		
+
 		private String name;
 		private ArrayList<String> terms;
 		private String startDate;
-		
+
 		private Evaent(final String name, final ArrayList<String> terms, final String startDate) {
 			this.name = name;
 			this.terms = terms;
 			this.startDate = startDate;
 		}
-		
+
 		private boolean eventMatch(final String needle) {
 			return this.terms.contains(needle);
 		}
-		
+
 		private double latencyCheck(final long foundtime) {
 			double latency = (Long.valueOf(startDate) - foundtime) / 60.0;
 			return Math.max(1, latency);
