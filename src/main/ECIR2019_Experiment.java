@@ -21,12 +21,12 @@ public class ECIR2019_Experiment {
 	private ECIR2019_Experiment(final String streamFile, final String outputFolder) {
 		try {
 			EventDetectorModules ed = new EventDetectorModules(streamFile, outputFolder);
-			String[] types = {"random"};
-			int[] iws = {600000, 900000, 1200000, 1500000};
+			String[] types = {"random", "topn", "shifty", "llh"};
+			int[] iws = {300000, 600000, 900000, 1200000};
 			for (String type : types) {
 				switch (type) {
 				case "random":
-					for (int i = 1; i <= 25; i++) {
+					for (int i = 6; i <= 20; i++) {
 						for (int w : iws) {
 							System.out.println("Running random...");
 							ed.runRandomEvents(type, i, w);
@@ -34,7 +34,7 @@ public class ECIR2019_Experiment {
 					}
 					break;
 				case "topn":
-					for (int i = 1; i <= 25; i++) {
+					for (int i = 6; i <= 20; i++) {
 						for (int w : iws) {
 							System.out.println("Running topN...");
 							ed.runTopN(type, i, w);
@@ -42,13 +42,13 @@ public class ECIR2019_Experiment {
 					}
 					break;
 				case "shifty":
-					for (int i = 1; i <= 100; i++) {
+					for (int i = 10; i <= 70; i++) {
 						System.out.println("Running shifty...");
 						ed.runShifty(type, i);
 					}
 					break;
 				case "llh":
-					for (int i = 1; i <= 25; i++) {
+					for (int i = 6; i <= 20; i++) {
 						for (int w : iws) {
 							System.out.println("Running LLH...");
 							ed.runLLH(type, i, w);

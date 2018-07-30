@@ -1,7 +1,4 @@
-/*
- * @(#)EvaluationModule.java   1.0   Jul 24, 2018
- */
-package evaluation;
+package kn.uni.inf.twistorino;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,38 +18,44 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import twistor.Helper;
-
-/**
- * Class for running the evaluation of event detection results.
- *
- * @author Andreas Weiler &lt;wele@zhaw.ch&gt;
- * @version 1.0
- */
 public class EvaluationModule {
 
 	/** List with contained evaluation events. */
 	List<Evaent> events = new ArrayList<>();
 
 	/**
+	 * Main method.
+	 * @param args arguments
+	 */
+	public static void main(String[] args) {
+		try {
+			new EvaluationModule();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
 	 * Constructor.
 	 * @param events file with events
-	 * @param eventsFile file with events description
-	 * @param resultspath folder with result files
+	 * @param resultfolder folder with result files
 	 * @throws Exception exception
 	 */
-	public EvaluationModule(final String eventsFile, final String resultspath) throws Exception {
-		this.readEventsFile(eventsFile);
-		String fpath = resultspath;
-		System.out.println("Type\tPrecision\tRecall\tFScore\tAVG(Latency)\tPerformance");
+	public EvaluationModule() throws Exception {
+		this.readEventsFile();
+		String fpath = "./results";
+		//System.out.println("Type\tFScore\tLatency\tPerformance");
 		File folder = new File(fpath);
 		String[] resultfiles = folder.list();
 		Arrays.sort(resultfiles, Collections.reverseOrder());
+		int c = 1;
 		for(String rfile : resultfiles) {
 			// read file content
 			if (rfile.startsWith(".")) continue;
 			List<String> results = Files.readAllLines(Paths.get(fpath + "/" + rfile), Charset.defaultCharset());
 			evaluateResults(rfile, this.events, results);
+			//System.out.print("D" + c + "\t");
+			c++;
 		}
 	}
 
@@ -68,11 +71,12 @@ public class EvaluationModule {
 		cevents.addAll(events);
 		int slength = cevents.size();
 		double perform = 0;
-		long latency = 0;
+		double latency = 0;
+		int timeadder = getTimeAdder(name);
 		for (String res : results) {
 			String[] resitems = res.split("\t");
 			if (resitems.length < 2) {
-				perform = Double.valueOf(res);
+				perform = calculatePerformance(Double.valueOf(res));
 				continue;
 			}
 			String fevent = resitems[2];
@@ -84,7 +88,7 @@ public class EvaluationModule {
 				}
 			}
 			if (found != null) {
-				latency += found.latencyCheck(Helper.timeStringToSeconds2(resitems[1]));
+				latency += found.latencyCheck(Helper.timeStringToSeconds2(resitems[1]) + timeadder);
 				cevents.remove(found);
 			}
 		}
@@ -96,15 +100,47 @@ public class EvaluationModule {
 		precision = Math.round(precision*1000)/1000.0;
 		fscore = Math.round(fscore*1000)/1000.0;
 		avglatency = Math.round(avglatency*1000)/1000.0;
-		System.out.println(name + "\t" + precision + "\t" + recall + "\t" + fscore + "\t" + avglatency + "\t" + perform);
+		System.out.print(perform + "\t");
+		//System.out.println(name + "\t" + fscore + "\t" + avglatency + "\t" + perform);
+	}
+
+	/**
+	 * Returns performance value based on the hypotheses that 5000 tweets per seconds are enough to process
+	 * per second.
+	 * @param input performance value
+	 * @return calculated performance value
+	 */
+	private double calculatePerformance(final double input) {
+		// assumption that processing of 30,000 tweets per second leads to the best score
+		double res = Math.round((input * 0.00003)*1000)/1000.0;
+		return Math.min(1.0, res);
+	}
+
+	/**
+	 * Returns the time that needs to be added to the event time cause of time output of Niagarino.
+	 * @param name name of file
+	 * @return time to add to
+	 */
+	private int getTimeAdder(final String name) {
+		// shifty always reports events with a timestamp 4 minutes to early
+		if (name.toLowerCase().contains("shifty")) {
+			return 240;
+		} else if (name.toLowerCase().contains("topn")){
+			// the other topn technique reports events with a timestamp from the beginning of the timewindow
+			// instead of the end
+			int s = name.lastIndexOf("_") + 1;
+			int e = name.lastIndexOf(".");
+			return (int) (Integer.valueOf(name.substring(s, e)) / 1000.0);
+		}
+		return 0;
 	}
 
 	/**
 	 * Reads the file with the event descriptions.
 	 * @throws Exception exception
- 	*/
-	public void readEventsFile(final String eventsFile) throws Exception {
-		File file = new File(eventsFile);
+	 */
+	public void readEventsFile() throws Exception {
+		File file = new File("./events_10p.xml");
 		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory
 		        .newInstance();
 		DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
@@ -124,44 +160,44 @@ public class EvaluationModule {
 	}
 
 	/**
- * Returns the time that needs to be added to the results cause of wrong time output of Niagarino.
- * Niagarino always prints the timestamp of the first seen tuple in the window.
- * Note: The filenames need to contain the miliseconds of type or the name Shifty.
- * @param name name of file
- * @return time to add to
- */
-private int getTimeAdder(final String name) {
-	if (name.contains("Shifty")) {
-		return 240;
-	} else {
-		int s = name.lastIndexOf("_") + 1;
-		int e = name.lastIndexOf(".");
-		return (int) (Integer.valueOf(name.substring(s, e)) / 1000.0);
-	}
-}
-
-	/**
-	* Inner class for an evaluation event instance.
-	*/
+	 * Inner class for an evalatuion event.
+	 */
 	private class Evaent {
 
 		private String name;
 		private ArrayList<String> terms;
 		private String startDate;
 
+		/**
+		 * Constructor.
+		 * @param name name of event
+		 * @param terms list of terms describing the event
+		 * @param startDate date of event start
+		 */
 		private Evaent(final String name, final ArrayList<String> terms, final String startDate) {
 			this.name = name;
 			this.terms = terms;
 			this.startDate = startDate;
 		}
 
+		/**
+		 * Matches an event against another.
+		 * @param needle term to match
+		 * @return flag if needle is found in termlist
+		 */
 		private boolean eventMatch(final String needle) {
 			return this.terms.contains(needle);
 		}
 
+		/**
+		 * Checks latency of a detected event.
+		 * @param foundtime time of event detection
+		 * @return value of gap between detection and actual event start
+		 */
 		private double latencyCheck(final long foundtime) {
-			double latency = (Long.valueOf(startDate) - foundtime) / 60.0;
-			return Math.max(1, latency);
+			// we assume that 60 minutes is the worst latency time
+			double latency = ((foundtime - (Long.valueOf(startDate))) / 60.0) * 0.0166;
+			return Math.max(0.0, latency);
 		}
 	}
 }
