@@ -7,8 +7,8 @@ import twistor.GlobalParameters;
 import twistor.Stream;
 
 /**
- * Class for creating the Twistor data streams with 10 percent scale.
- * 
+ * Class for creating the Twistor data stream with 10 percent scale.
+ *
  * @author Andreas Weiler &lt;wele@zhaw.ch&gt;
  * @version 1.0
  */
